@@ -1,6 +1,7 @@
 use std::net::{TcpStream, ToSocketAddrs};
 use openssl::ssl::{SslContext, SslStream};
 use std::io::{Read, Write};
+use std::time::Duration;
 
 use super::mailbox::Mailbox;
 use super::authenticator::Authenticator;
@@ -48,6 +49,8 @@ impl Client<SslStream<TcpStream>> {
 	pub fn secure_connect<A: ToSocketAddrs>(addr: A, ssl_context: SslContext) -> Result<Client<SslStream<TcpStream>>> {
 		match TcpStream::connect(addr) {
 			Ok(stream) => {
+				let _ = stream.set_read_timeout(Some(Duration::new(10, 0)));
+				let _ = stream.set_write_timeout(Some(Duration::new(10, 0)));
 				let ssl_stream = match SslStream::connect(&ssl_context, stream) {
 					Ok(s) => s,
 					Err(e) => return Err(Error::Ssl(e))
